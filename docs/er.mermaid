@@ -1,0 +1,77 @@
+erDiagram
+    USER {
+        string id "Уникальный ID"
+        string name "Отображаемое имя"
+        bool premium "Имеет ли премиум подписку"
+        string description "Описание или биография"
+        int rank "Уровень (пользователь, модератор, админ и тд.)"
+        string email "Почта"
+        uuid[] posts "Список ID постов пользователя"
+    }
+
+    PASSWORD {
+        string user_id "Пользователь"
+        hash password "Хэш пароля"
+    }
+
+    SESSION {
+        uuid id "ID соединения"
+        string user_id "Пользователь"
+        time start_time "Время открытия"
+        JWT token "JWT токен"
+        IP user_ip "IP адрес"
+    }
+
+    POST {
+        uuid id "ID поста"
+        time create_time "Дата создания"
+        string author "Автор (его ID)"
+        string title "Заголовок"
+        string text "Содержание"
+        int views "Просмотры"
+        int likes "Лайки"
+        int clowns "Реакции клоуна"
+        uuid[] comments "ID комментариев"
+    }
+
+    COMMENT {
+        uuid id "ID комментария"
+        uuid post_id "ID поста"
+        string author "Автор (его ID)"
+        time create_time "Дата создания"
+        string text "Содержание"
+        int likes "Лайки"
+        int clowns "Реакции клоуна"
+    }
+
+    USER_STAT {
+        string user_id "ID пользователя"
+        time update_time "Время обновления статистики"
+        int posts "Кол-во постов"
+        int posts_views "Кол-во просмотров на всех постах"
+        int posts_likes "Кол-во лайков на всех постах"
+        int posts_clowns "Кол-во клоунов на всех постах"
+        int comments_likes "Кол-во лайков на всех комментариях"
+        int comments_clowns "Кол-во клоунов на всех комментариях"
+    }
+
+    POST_STAT {
+        uuid post_id "ID поста"
+        time update_time "Время обновления статистики"
+        int views "Кол-во просмотров"
+        int likes "Кол-во лайков"
+        int clowns "Кол-во клоунов"
+        int comments "Кол-во комментариев"
+    }
+
+    COMMENT_STAT {
+        uuid comment_id "ID комментария"
+        time update_time "Время обновления статистики"
+        int likes "Кол-во лайков"
+        int clowns "Кол-во клоунов"
+    }
+
+    USER ||--|| PASSWORD : "Имеет"
+    USER ||--o{ SESSION : "Открывает"
+    USER ||--o{ POST : "Пишет"
+    POST ||--o{ COMMENT : "Имеет"
