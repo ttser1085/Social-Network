@@ -46,6 +46,7 @@ erDiagram
 
     USER_STAT {
         string user_id "ID пользователя"
+        bool premium "Имеет ли пользователь премиум"
         time update_time "Время обновления статистики"
         int posts "Кол-во постов"
         int posts_views "Кол-во просмотров на всех постах"
@@ -57,6 +58,7 @@ erDiagram
 
     POST_STAT {
         uuid post_id "ID поста"
+        bool premium "Имеет ли автор поста премиум"
         time update_time "Время обновления статистики"
         int views "Кол-во просмотров"
         int likes "Кол-во лайков"
@@ -66,6 +68,7 @@ erDiagram
 
     COMMENT_STAT {
         uuid comment_id "ID комментария"
+        bool premium "Имеет ли автор комментария премиум"
         time update_time "Время обновления статистики"
         int likes "Кол-во лайков"
         int clowns "Кол-во клоунов"
