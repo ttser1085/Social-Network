@@ -1,0 +1,27 @@
+services:
+    auth:
+        build: 
+            context: auth
+        depends_on:
+            - db
+        ports:
+            - 8091:8091
+    
+    gateway:
+        build: 
+            context: gateway
+        depends_on:
+            - auth
+        ports:
+            - 8092:8092
+    
+    db:
+      image: postgres:latest
+      restart: always
+      environment:
+        POSTGRES_USER: auth
+        POSTGRES_PASSWORD: password
+        POSTGRES_DB: usersdb
+      ports:
+        - 5432:5432
+
