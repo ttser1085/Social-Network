@@ -1,0 +1,109 @@
+openapi: 3.0.3
+info:
+  title: Auth Service
+  version: "1.0"
+  description: API для регистрации, входа в систему и управления пользователем
+paths:
+  /signup:
+    post:
+      summary: Регистрация нового пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupInfo'
+      responses:
+        "200":
+          description: Регистрация успешна
+        "400":
+          description: Неверный запрос
+        "403":
+          description: Пользователь уже существует
+  /login:
+    post:
+      summary: Вход пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginInfo'
+      responses:
+        "200":
+          description: Вход успешен
+        "400":
+          description: Неверный запрос
+        "403":
+          description: Неверные данные для входа
+  /whoami:
+    get:
+      summary: Получить информацию о текущем пользователе
+      responses:
+        "200":
+          description: Успешный запрос
+          content:
+            text/plain:
+              schema:
+                type: string
+        "401":
+          description: Отсутствует JWT токен
+        "400":
+          description: Неверный токен
+  /update:
+    post:
+      summary: Обновление информации пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateInfo'
+      responses:
+        "200":
+          description: Данные успешно обновлены
+        "400":
+          description: Неверный токен или данные
+        "401":
+          description: Отсутствует JWT токен
+components:
+  schemas:
+    SignupInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          example: user123
+        name:
+          type: string
+          example: Ivan Ivanov
+        email:
+          type: string
+          example: ivan@example.com
+        password:
+          type: string
+          example: mypassword
+      required: [id, name, email, password]
+    LoginInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          example: user123
+        password:
+          type: string
+          example: mypassword
+      required: [id, password]
+    UpdateInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Ivan Ivanov
+        email:
+          type: string
+          example: ivan@example.com
+        description:
+          type: string
+          example: Some description
+      required: [name, email, description]
