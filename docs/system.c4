@@ -1,0 +1,139 @@
+specification {
+    element system
+    element user {
+        style {
+            shape person
+            color secondary
+        }
+    }
+    element ui
+    element service {
+        style {
+            color indigo
+        }
+    }
+    element storage {
+        style {
+            color green
+            shape storage
+        }
+    }
+    element queue {
+        style {
+            color sky
+            shape queue
+        }
+    }
+}
+
+model {
+    user = user 'User' {
+        description 'Рядовой пользователь'
+    }
+
+    browser = ui 'UI' {
+        description 'Веб сайт'
+        style {
+            shape browser
+        }
+    }
+
+    user -> browser 'Скролит, постит, комментирует и тд'
+
+    social_network = system 'Social Network' {
+        style {
+            color sky
+            multiple true
+        }
+
+
+        gateway = service 'Gateway' {
+            description 'Принимает запросы от пользователя'
+            technology 'Golang'
+            style {
+                icon tech:go
+            }
+        }
+
+        auth = service 'Auth Service' {
+            description 'Аутентификация и авторизация'
+            technology 'Golang'
+            style {
+                icon tech:go
+            }
+        }
+
+        stat = service 'Statistic Service' {
+            description 'Обрабатывет статистику постов'
+            technology 'Python'
+            style {
+                icon tech:python
+            }
+        }
+
+        posts = service 'Posts Service' {
+            description 'Отвечает за посты, лайки комментарии'
+            technology 'Golang'
+            style {
+                icon tech:go
+            }
+        }
+
+        req_queue = queue 'Broker' {
+            description 'Маршрутизирует запросы между серверами'
+            technology 'RabbitMQ'
+            style {
+                icon tech:rabbitmq
+            }
+        }
+
+        stat_queue = queue 'Statistic Broker' {
+            description 'Направляет информацию о постах'
+            technology 'RabbitMQ'
+            style {
+                icon tech:rabbitmq
+            }
+        }
+
+        users_db = storage 'Users Database' {
+            description 'Хранит данные пользователей'
+            technology 'PostgreSQL'
+            style {
+                icon tech:postgresql
+            }
+        }
+
+        posts_db = storage 'Posts Database' {
+            description 'Хранит постов'
+            technology 'PostgreSQL'
+            style {
+                icon tech:postgresql
+            }
+        }
+
+        stat_db = storage 'Statistic Database' {
+            description 'Хранит статистику постов'
+            technology 'Clickhouse'
+            style {
+                icon https://static.cdnlogo.com/logos/c/57/clickhouse.svg
+            }
+        }
+
+        browser -> gateway 'HTTPS'
+        gateway -> req_queue 'Передает брокеру'
+        req_queue -> auth 'Маршрутизация'
+        req_queue -> posts 'Маршрутизация'
+        posts -> stat_queue 'Отправка данныз о посте'
+        stat_queue -> stat 'Маршрутизация'
+        auth -> users_db 'SQL запрос'
+        posts -> posts_db 'SQL запрос'
+        posts -> users_db 'SQL запрос'
+        stat -> stat_db 'SQL запрос'
+    }
+}
+
+views {
+    view index {
+        include *
+    }
+}
