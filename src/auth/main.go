@@ -94,8 +94,6 @@ func (h *AuthHandler) signup(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	fmt.Printf("Signup: %s\n", creds.Id)
-
 	var exists bool
 	err = h.db.QueryRow(`SELECT EXISTS (SELECT 1 FROM "users" WHERE id = $1)`, creds.Id).Scan(&exists)
 	if err != nil {

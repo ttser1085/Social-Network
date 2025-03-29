@@ -16,12 +16,11 @@ services:
             - 8092:8092
     
     db:
-      image: postgres:latest
-      restart: always
-      environment:
-        POSTGRES_USER: auth
-        POSTGRES_PASSWORD: password
-        POSTGRES_DB: usersdb
-      ports:
-        - 5432:5432
-
+        image: postgres:latest
+        restart: always
+        environment:
+            POSTGRES_USER: auth
+            POSTGRES_PASSWORD: password
+            POSTGRES_DB: usersdb
+        ports:
+            - 5432:5432
