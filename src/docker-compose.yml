@@ -3,9 +3,17 @@ services:
         build: 
             context: auth
         depends_on:
-            - db
+            - users_db
         ports:
             - 8091:8091
+    
+    posts:
+        build: 
+            context: posts
+        depends_on:
+            - posts_db
+        ports:
+            - 8093:8093
     
     gateway:
         build: 
@@ -15,7 +23,7 @@ services:
         ports:
             - 8092:8092
     
-    db:
+    users_db:
         image: postgres:latest
         restart: always
         environment:
@@ -24,3 +32,15 @@ services:
             POSTGRES_DB: usersdb
         ports:
             - 5432:5432
+        command: -p 5432
+
+    posts_db:
+        image: postgres:latest
+        restart: always
+        environment:
+            POSTGRES_USER: posts
+            POSTGRES_PASSWORD: password
+            POSTGRES_DB: postsdb
+        ports:
+            - 5433:5433
+        command: -p 5433

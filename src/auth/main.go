@@ -336,8 +336,8 @@ func (h *AuthHandler) update(w http.ResponseWriter, req *http.Request) {
 }
 
 func connectToDB() (*sql.DB, error) {
-	fmt.Println("Connectint to database...")
-	connStr := "host=db port=5432 user=auth password=password dbname=usersdb sslmode=disable"
+	fmt.Println("Connecting to database...")
+	connStr := "host=users_db port=5432 user=auth password=password dbname=usersdb sslmode=disable"
 	return sql.Open("postgres", connStr)
 }
 
