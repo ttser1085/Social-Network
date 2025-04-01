@@ -1,4 +1,4 @@
-module github.com/yourusername/Social-Network/src/auth
+module github.com/ttser1085/Social-Network/src/auth
 
 go 1.20
 
