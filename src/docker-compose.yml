@@ -52,3 +52,6 @@ services:
         ports:
             - 5433:5433
         command: -p 5433
+    tests:
+        build:
+            context: tests
