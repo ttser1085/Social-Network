@@ -46,7 +46,7 @@ func initDB(db *sql.DB) {
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS "comments" (
 			id          TEXT PRIMARY KEY,
-			FOREIGN KEY (post_id) REFERENCES posts(id),
+			post_id		TEXT,
 			created     TIMESTAMP NOT NULL,
 			author      TEXT NOT NULL,
 			text        TEXT
@@ -96,7 +96,7 @@ func (s *Server) CreatePost(ctx context.Context, req *CreatePostRequest) (*empty
 
 	_, err = s.db.Exec(`
 		INSERT INTO "posts" (id, created, author, title, text) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+		VALUES ($1, $2, $3, $4, $5);
 	`, postId, time.Now().UTC(), userId, req.GetTitle(), req.GetText())
 	if err != nil {
 		return nil, fmt.Errorf("error connecting with db: %v", err)
@@ -137,7 +137,7 @@ func (s *Server) CreateComment(ctx context.Context, req *CreateCommentRequest) (
 
 	_, err = s.db.Exec(`
 		INSERT INTO "comments" (id, post_id, created, author, text) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7);
+		VALUES ($1, $2, $3, $4, $5);
 	`, commId, req.GetPostId(), time.Now().UTC(), userId, req.GetText())
 	if err != nil {
 		return nil, fmt.Errorf("error connecting with db: %v", err)

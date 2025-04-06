@@ -24,7 +24,7 @@ func customMetadataAnnotator(ctx context.Context, r *http.Request) metadata.MD {
 	if token == "" {
 		return metadata.Pairs()
 	}
-	return metadata.Pairs("jwt", token)
+	return metadata.Pairs("token", token)
 }
 
 func runProxy() error {
