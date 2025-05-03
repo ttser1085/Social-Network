@@ -13,6 +13,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/golang-jwt/jwt/v5"
 
 	_ "github.com/lib/pq"
@@ -52,6 +53,7 @@ type AuthHandler struct {
 	db         *sql.DB
 	jwtPrivate *rsa.PrivateKey
 	jwtPublic  *rsa.PublicKey
+	producer   *kafka.Producer
 }
 
 func (h *AuthHandler) genToken(id string) string {
@@ -125,6 +127,18 @@ func (h *AuthHandler) signup(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "Error connecting with db: %v", err)
+		return
+	}
+
+	topic := "signup"
+	err = h.producer.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Value:          fmt.Appendf(nil, "id: %s, time: %s", creds.Id, time.Now().String()),
+	}, nil)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "Error sending with kafka: %v", err)
 		return
 	}
 
@@ -410,7 +424,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	handler := AuthHandler{db, jwtPrivate, jwtPublic}
+	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "kafka:9092"})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	handler := AuthHandler{db, jwtPrivate, jwtPublic, p}
+	defer handler.producer.Close()
 	http.HandleFunc("/signup", handler.signup)
 	http.HandleFunc("/login", handler.login)
 	http.HandleFunc("/whoami", handler.whoami)

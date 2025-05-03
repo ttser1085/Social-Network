@@ -11,6 +11,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
@@ -56,12 +57,25 @@ func initDB(db *sql.DB) {
 		fmt.Fprintln(os.Stderr, "Failed to init table:", err)
 		os.Exit(1)
 	}
+
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS "likes" (
+			like_id     TEXT PRIMARY KEY,
+			user_id		TEXT,
+			post_id		TEXT
+		);`)
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to init table:", err)
+		os.Exit(1)
+	}
 }
 
 type Server struct {
 	UnimplementedPostsServer
 	db        *sql.DB
 	jwtPublic *rsa.PublicKey
+	producer  *kafka.Producer
 }
 
 func (s *Server) CreatePost(ctx context.Context, req *CreatePostRequest) (*emptypb.Empty, error) {
@@ -141,6 +155,16 @@ func (s *Server) CreateComment(ctx context.Context, req *CreateCommentRequest) (
 	`, commId, req.GetPostId(), time.Now().UTC(), userId, req.GetText())
 	if err != nil {
 		return nil, fmt.Errorf("error connecting with db: %v", err)
+	}
+
+	topic := "posts-comments"
+	err = s.producer.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Value:          fmt.Appendf(nil, "post id: %s, user id: %s, time: %s", req.GetPostId(), userId, time.Now().String()),
+	}, nil)
+
+	if err != nil {
+		return nil, fmt.Errorf("error sending to kafka: %v", err)
 	}
 
 	return &emptypb.Empty{}, nil
@@ -395,6 +419,16 @@ func (s *Server) GetPosts(req *GetPostsRequest, stream Posts_GetPostsServer) err
 
 		post.Created = timestamppb.New(created)
 
+		topic := "posts-views"
+		err = s.producer.Produce(&kafka.Message{
+			TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+			Value:          fmt.Appendf(nil, "post id: %s, time: %s", post.Id, time.Now().String()),
+		}, nil)
+
+		if err != nil {
+			return fmt.Errorf("error sending to  kafka: %v", err)
+		}
+
 		if err := stream.Send(&post); err != nil {
 			return fmt.Errorf("error sending post: %v", err)
 		}
@@ -433,6 +467,85 @@ func (s *Server) GetComments(req *GetCommentsRequest, stream Posts_GetCommentsSe
 	return nil
 }
 
+func (s *Server) LikePost(ctx context.Context, req *LikePostRequest) (*emptypb.Empty, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("no metadata in context")
+	}
+
+	token, err := jwt.Parse(md.Get("token")[0], func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, errors.New("invalid signing method")
+		}
+
+		return s.jwtPublic, nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("invalid token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return nil, fmt.Errorf("invalid token")
+	}
+
+	userId, ok := claims["id"].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid token")
+	}
+
+	var alredyLiked int
+	err = s.db.QueryRow(`
+    	SELECT COUNT(*) 
+    	FROM "likes" 
+    	WHERE post_id = $1 AND user_id = $2
+	`, req.PostId, userId).Scan(&alredyLiked)
+	if err != nil {
+		return nil, fmt.Errorf("error counting likes: %v", err)
+	}
+
+	if alredyLiked != 0 {
+		return nil, fmt.Errorf("already liked")
+	}
+
+	likeId := uuid.New().String()
+
+	_, err = s.db.Exec(`
+		INSERT INTO "likes" (like_id, user_id, post_id) 
+		VALUES ($1, $2, $3);
+	`, likeId, userId, req.GetPostId())
+	if err != nil {
+		return nil, fmt.Errorf("error connecting with db: %v", err)
+	}
+
+	topic := "posts-likes"
+	err = s.producer.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Value:          fmt.Appendf(nil, "post id: %s, user id %s, time: %s", req.GetPostId(), userId, time.Now().String()),
+	}, nil)
+
+	if err != nil {
+		return nil, fmt.Errorf("error sending to kafka: %v", err)
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+func (s *Server) GetLikes(ctx context.Context, req *GetLikesRequest) (*GetLikesResponse, error) {
+	var resp GetLikesResponse
+	err := s.db.QueryRow(`
+    	SELECT COUNT(*) 
+    	FROM "likes" 
+    	WHERE post_id = $1
+	`, req.PostId).Scan(&resp.Num)
+	if err != nil {
+		return nil, fmt.Errorf("error counting likes: %v", err)
+	}
+
+	return &resp, nil
+}
+
 func main() {
 	port := 8093
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
@@ -462,6 +575,12 @@ func main() {
 		os.Exit(1)
 	}
 	defer server.db.Close()
+
+	server.producer, err = kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "kafka:9092"})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 
 	initDB(server.db)
 

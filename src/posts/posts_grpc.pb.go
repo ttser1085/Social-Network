@@ -23,6 +23,8 @@ const (
 	Posts_CreatePost_FullMethodName    = "/posts.Posts/CreatePost"
 	Posts_CreateComment_FullMethodName = "/posts.Posts/CreateComment"
 	Posts_ModifyPost_FullMethodName    = "/posts.Posts/ModifyPost"
+	Posts_GetLikes_FullMethodName      = "/posts.Posts/GetLikes"
+	Posts_LikePost_FullMethodName      = "/posts.Posts/LikePost"
 	Posts_ModifyComment_FullMethodName = "/posts.Posts/ModifyComment"
 	Posts_DeletePost_FullMethodName    = "/posts.Posts/DeletePost"
 	Posts_DeleteComment_FullMethodName = "/posts.Posts/DeleteComment"
@@ -37,6 +39,8 @@ type PostsClient interface {
 	CreatePost(ctx context.Context, in *CreatePostRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	CreateComment(ctx context.Context, in *CreateCommentRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	ModifyPost(ctx context.Context, in *ModifyPostRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	GetLikes(ctx context.Context, in *GetLikesRequest, opts ...grpc.CallOption) (*GetLikesResponse, error)
+	LikePost(ctx context.Context, in *LikePostRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	ModifyComment(ctx context.Context, in *ModifyCommentRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	DeletePost(ctx context.Context, in *DeletePostRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	DeleteComment(ctx context.Context, in *DeleteCommentRequest, opts ...grpc.CallOption) (*empty.Empty, error)
@@ -76,6 +80,26 @@ func (c *postsClient) ModifyPost(ctx context.Context, in *ModifyPostRequest, opt
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, Posts_ModifyPost_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postsClient) GetLikes(ctx context.Context, in *GetLikesRequest, opts ...grpc.CallOption) (*GetLikesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetLikesResponse)
+	err := c.cc.Invoke(ctx, Posts_GetLikes_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postsClient) LikePost(ctx context.Context, in *LikePostRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, Posts_LikePost_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -157,6 +181,8 @@ type PostsServer interface {
 	CreatePost(context.Context, *CreatePostRequest) (*empty.Empty, error)
 	CreateComment(context.Context, *CreateCommentRequest) (*empty.Empty, error)
 	ModifyPost(context.Context, *ModifyPostRequest) (*empty.Empty, error)
+	GetLikes(context.Context, *GetLikesRequest) (*GetLikesResponse, error)
+	LikePost(context.Context, *LikePostRequest) (*empty.Empty, error)
 	ModifyComment(context.Context, *ModifyCommentRequest) (*empty.Empty, error)
 	DeletePost(context.Context, *DeletePostRequest) (*empty.Empty, error)
 	DeleteComment(context.Context, *DeleteCommentRequest) (*empty.Empty, error)
@@ -180,6 +206,12 @@ func (UnimplementedPostsServer) CreateComment(context.Context, *CreateCommentReq
 }
 func (UnimplementedPostsServer) ModifyPost(context.Context, *ModifyPostRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ModifyPost not implemented")
+}
+func (UnimplementedPostsServer) GetLikes(context.Context, *GetLikesRequest) (*GetLikesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetLikes not implemented")
+}
+func (UnimplementedPostsServer) LikePost(context.Context, *LikePostRequest) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LikePost not implemented")
 }
 func (UnimplementedPostsServer) ModifyComment(context.Context, *ModifyCommentRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ModifyComment not implemented")
@@ -267,6 +299,42 @@ func _Posts_ModifyPost_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PostsServer).ModifyPost(ctx, req.(*ModifyPostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Posts_GetLikes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLikesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostsServer).GetLikes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Posts_GetLikes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostsServer).GetLikes(ctx, req.(*GetLikesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Posts_LikePost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LikePostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostsServer).LikePost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Posts_LikePost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostsServer).LikePost(ctx, req.(*LikePostRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -365,6 +433,14 @@ var Posts_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ModifyPost",
 			Handler:    _Posts_ModifyPost_Handler,
+		},
+		{
+			MethodName: "GetLikes",
+			Handler:    _Posts_GetLikes_Handler,
+		},
+		{
+			MethodName: "LikePost",
+			Handler:    _Posts_LikePost_Handler,
 		},
 		{
 			MethodName: "ModifyComment",

@@ -27,6 +27,20 @@ service Posts {
       body: "*"
     };
   }
+
+  rpc GetLikes(GetLikesRequest) returns (GetLikesResponse) {
+    option (google.api.http) = {
+      get: "/posts/likes"
+    };
+  }
+
+  rpc LikePost(LikePostRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/posts/likes"
+      body: "*"
+    };
+  }
+
   rpc ModifyComment(ModifyCommentRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       put: "/comments"
@@ -106,7 +120,19 @@ message ModifyCommentRequest {
     string text = 2;
 }
 
-
 message GetCommentsRequest {
     string post_id = 1;
+}
+
+message LikePostRequest {
+    string id = 1;
+    string post_id = 2;
+}
+
+message GetLikesRequest {
+    string post_id = 1;
+}
+
+message GetLikesResponse {
+    int32 num = 1;
 }

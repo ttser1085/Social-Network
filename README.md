@@ -35,3 +35,9 @@
 
 - delete comment:
     `curl -v -X DELETE 'localhost:8094/comments?id=...' -H 'Cookie: token= ...'`
+
+- like post:
+    `curl -v -X POST 'localhost:8094/posts/likes' -H 'Cookie: token= ...' --data '{"post_id": ...}'`
+
+- get likes:
+    `curl -v -X GET 'localhost:8094/posts/likes?post_id=...'`

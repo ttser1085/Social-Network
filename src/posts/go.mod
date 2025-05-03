@@ -2,7 +2,7 @@ module github.com/ttser1085/Social-Network/src/posts
 
 go 1.23.0
 
-toolchain go1.24.1
+toolchain go1.24.2
 
 require (
 	github.com/golang/protobuf v1.5.4
@@ -13,6 +13,8 @@ require (
 	google.golang.org/grpc v1.71.0
 	google.golang.org/protobuf v1.36.5
 )
+
+require github.com/confluentinc/confluent-kafka-go v1.9.2
 
 require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible

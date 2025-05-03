@@ -45,12 +45,12 @@ func runProxy() error {
 		return err
 	}
 
-	log.Printf("Starting HTTP proxy on :%d\n", port)
+	log.Printf("Starting GRPC proxy on :%d\n", port)
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
 }
 
 func main() {
 	if err := runProxy(); err != nil {
-		log.Fatalf("Failed to start HTTP proxy: %v", err)
+		log.Fatalf("Failed to start GRPC proxy: %v", err)
 	}
 }

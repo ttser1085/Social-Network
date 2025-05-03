@@ -107,6 +107,63 @@ func local_request_Posts_ModifyPost_0(ctx context.Context, marshaler runtime.Mar
 	return msg, metadata, err
 }
 
+var filter_Posts_GetLikes_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+
+func request_Posts_GetLikes_0(ctx context.Context, marshaler runtime.Marshaler, client PostsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetLikesRequest
+		metadata runtime.ServerMetadata
+	)
+	io.Copy(io.Discard, req.Body)
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Posts_GetLikes_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.GetLikes(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_Posts_GetLikes_0(ctx context.Context, marshaler runtime.Marshaler, server PostsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq GetLikesRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Posts_GetLikes_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.GetLikes(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_Posts_LikePost_0(ctx context.Context, marshaler runtime.Marshaler, client PostsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq LikePostRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.LikePost(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_Posts_LikePost_0(ctx context.Context, marshaler runtime.Marshaler, server PostsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq LikePostRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.LikePost(ctx, &protoReq)
+	return msg, metadata, err
+}
+
 func request_Posts_ModifyComment_0(ctx context.Context, marshaler runtime.Marshaler, client PostsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq ModifyCommentRequest
@@ -315,6 +372,46 @@ func RegisterPostsHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 		}
 		forward_Posts_ModifyPost_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodGet, pattern_Posts_GetLikes_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/posts.Posts/GetLikes", runtime.WithHTTPPathPattern("/posts/likes"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Posts_GetLikes_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Posts_GetLikes_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_Posts_LikePost_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/posts.Posts/LikePost", runtime.WithHTTPPathPattern("/posts/likes"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Posts_LikePost_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Posts_LikePost_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	mux.Handle(http.MethodPut, pattern_Posts_ModifyComment_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -480,6 +577,40 @@ func RegisterPostsHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 		}
 		forward_Posts_ModifyPost_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodGet, pattern_Posts_GetLikes_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/posts.Posts/GetLikes", runtime.WithHTTPPathPattern("/posts/likes"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Posts_GetLikes_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Posts_GetLikes_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_Posts_LikePost_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/posts.Posts/LikePost", runtime.WithHTTPPathPattern("/posts/likes"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Posts_LikePost_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_Posts_LikePost_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	mux.Handle(http.MethodPut, pattern_Posts_ModifyComment_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -572,6 +703,8 @@ var (
 	pattern_Posts_CreatePost_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"posts"}, ""))
 	pattern_Posts_CreateComment_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"comments"}, ""))
 	pattern_Posts_ModifyPost_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"posts"}, ""))
+	pattern_Posts_GetLikes_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"posts", "likes"}, ""))
+	pattern_Posts_LikePost_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"posts", "likes"}, ""))
 	pattern_Posts_ModifyComment_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"comments"}, ""))
 	pattern_Posts_DeletePost_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"posts"}, ""))
 	pattern_Posts_DeleteComment_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"comments"}, ""))
@@ -583,6 +716,8 @@ var (
 	forward_Posts_CreatePost_0    = runtime.ForwardResponseMessage
 	forward_Posts_CreateComment_0 = runtime.ForwardResponseMessage
 	forward_Posts_ModifyPost_0    = runtime.ForwardResponseMessage
+	forward_Posts_GetLikes_0      = runtime.ForwardResponseMessage
+	forward_Posts_LikePost_0      = runtime.ForwardResponseMessage
 	forward_Posts_ModifyComment_0 = runtime.ForwardResponseMessage
 	forward_Posts_DeletePost_0    = runtime.ForwardResponseMessage
 	forward_Posts_DeleteComment_0 = runtime.ForwardResponseMessage
