@@ -19,17 +19,21 @@ def posts():
 def comments():
     return 'http://grpc-gateway:8094/comments'
 
+@pytest.fixture
+def stats():
+    return 'http://stats-gateway:8096/stats'
+
 def random_string(length=8):
     chars = string.ascii_letters
     return ''.join(random.choices(chars, k=length))
 
-def test_endtoend(signup, posts, comments):
+def test_endtoend(signup, posts, comments, stats):
     user = random_string()
     LOGGER.info(user)
 
     session = requests.Session()
 
-    req = requests.Request(method='POST', url=signup, data='{"id": "'+user+'", "name": "aboba", "password": "pass123"}', ).prepare()
+    req = requests.Request(method='POST', url=signup, data='{"id": "'+user+'", "name":"' + random_string(10) + '" , "password": "pass123"}', ).prepare()
     resp = session.send(req)
     LOGGER.debug(resp.content)
     assert resp.status_code == 200
@@ -45,6 +49,11 @@ def test_endtoend(signup, posts, comments):
     resp = session.send(req)
     assert resp.status_code == 200
 
+    req = requests.Request(method='GET', url=stats + '/top-posts?attr=likes').prepare()
+    resp = session.send(req)
+    assert resp.status_code == 200
+    assert resp.content.decode().count('",') == 0
+
     req = requests.Request(method='GET', url=posts+'?user_id='+user).prepare()
     resp = session.send(req)
     assert resp.status_code == 200
@@ -53,6 +62,12 @@ def test_endtoend(signup, posts, comments):
     content = str(resp.content)
     post_id = content[content.find('"id":"')+6:content.find('","')]
     LOGGER.info(post_id)
+
+    req = requests.Request(method='GET', url=stats + '/post?post_id=' + post_id).prepare()
+    resp = session.send(req)
+    assert resp.status_code == 200
+    content = str(resp.content)
+    assert '"views":0' in content
 
     req = requests.Request(method='PUT', url=posts, data='{"id":"'+post_id+'", "title": "new post title", "text":"new post text"}', cookies={'token': token}).prepare()
     resp = session.send(req)
@@ -83,6 +98,12 @@ def test_endtoend(signup, posts, comments):
     req = requests.Request(method='POST', url=comments, data='{"post_id": "'+post_id+'", "text":"ABOBA"}', cookies={'token': token}).prepare()
     resp = session.send(req)
     assert resp.status_code == 200
+
+    req = requests.Request(method='GET', url=stats + '/post?post_id=' + post_id).prepare()
+    resp = session.send(req)
+    assert resp.status_code == 200
+    content = str(resp.content)
+    #assert '"comments":2' in content
 
     req = requests.Request(method='GET', url=comments+'?post_id='+post_id).prepare()
     resp = session.send(req)

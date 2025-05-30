@@ -23,6 +23,22 @@ services:
         ports:
             - 8094:8094
     
+    stats:
+        build: 
+            context: stats
+        depends_on:
+            - clickhouse
+        ports:
+            - 8095:8095
+    
+    stats-gateway:
+        build: 
+            context: stats-gateway
+        depends_on:
+            - stats
+        ports:
+            - 8096:8096
+    
     gateway:
         build: 
             context: gateway
@@ -41,6 +57,22 @@ services:
         ports:
             - 5432:5432
         command: -p 5432
+
+    clickhouse:
+        image: clickhouse/clickhouse-server:latest
+        environment:
+            CLICKHOUSE_USER: default
+            CLICKHOUSE_PASSWORD: mysecret
+            CLICKHOUSE_DB: default
+        ports:
+            - "8123:8123"   # HTTP API
+            - "9000:9000"   # Native protocol (TCP)
+        volumes:
+            - clickhouse_data:/var/lib/clickhouse
+        ulimits:
+            nofile:
+                soft: 262144
+                hard: 262144
 
     posts_db:
         image: postgres:latest
@@ -76,7 +108,7 @@ services:
     kafdrop:
         image: obsidiandynamics/kafdrop
         ports:
-        - "9000:9000"
+        - "9001:9000"
         environment:
             KAFKA_BROKER_CONNECT: kafka:9092
         depends_on:
@@ -85,3 +117,7 @@ services:
     tests:
         build:
             context: tests
+    
+
+volumes:
+    clickhouse_data:

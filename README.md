@@ -41,3 +41,18 @@
 
 - get likes:
     `curl -v -X GET 'localhost:8094/posts/likes?post_id=...'`
+
+- get post stat:
+    `curl -v -X GET 'localhost:8096/stats/post?post_id=...'`
+
+- get views dynamic:
+    `curl -v -X GET 'localhost:8096/stats/post/views?post_id=...'`
+
+- get likes dynamic:
+    `curl -v -X GET 'localhost:8096/stats/post/likes?post_id=...'`
+
+- get comments dynamic:
+    `curl -v -X GET 'localhost:8096/stats/post/comments?post_id=...'`
+
+- get top posts:
+    `curl -v -X GET 'localhost:8096/stats/top-posts?attr=...'`

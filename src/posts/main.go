@@ -157,10 +157,21 @@ func (s *Server) CreateComment(ctx context.Context, req *CreateCommentRequest) (
 		return nil, fmt.Errorf("error connecting with db: %v", err)
 	}
 
+	var author string
+	err = s.db.QueryRow(`
+		SELECT author FROM "posts" WHERE id = $1
+	`, req.GetPostId()).Scan(&author)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("post not found")
+		}
+		return nil, fmt.Errorf("error querying post: %v", err)
+	}
+
 	topic := "posts-comments"
 	err = s.producer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-		Value:          fmt.Appendf(nil, "post id: %s, user id: %s, time: %s", req.GetPostId(), userId, time.Now().String()),
+		Value:          fmt.Appendf(nil, `{"post_id": "%s", "author": "%s", "user_id": "%s", "time": "%s"}`, req.GetPostId(), author, userId, time.Now().UTC().Format(time.RFC3339)),
 	}, nil)
 
 	if err != nil {
@@ -422,7 +433,7 @@ func (s *Server) GetPosts(req *GetPostsRequest, stream Posts_GetPostsServer) err
 		topic := "posts-views"
 		err = s.producer.Produce(&kafka.Message{
 			TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-			Value:          fmt.Appendf(nil, "post id: %s, time: %s", post.Id, time.Now().String()),
+			Value:          fmt.Appendf(nil, `{"post_id": "%s", "author":"%s", "time": "%s"}`, post.Id, req.UserId, time.Now().UTC().Format(time.RFC3339)),
 		}, nil)
 
 		if err != nil {
@@ -519,10 +530,21 @@ func (s *Server) LikePost(ctx context.Context, req *LikePostRequest) (*emptypb.E
 		return nil, fmt.Errorf("error connecting with db: %v", err)
 	}
 
+	var author string
+	err = s.db.QueryRow(`
+		SELECT author FROM "posts" WHERE id = $1
+	`, req.GetPostId()).Scan(&author)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("post not found")
+		}
+		return nil, fmt.Errorf("error querying post: %v", err)
+	}
+
 	topic := "posts-likes"
 	err = s.producer.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-		Value:          fmt.Appendf(nil, "post id: %s, user id %s, time: %s", req.GetPostId(), userId, time.Now().String()),
+		Value:          fmt.Appendf(nil, `{"post_id": "%s", "author": "%s", "user_id": "%s", "time": "%s"}`, req.GetPostId(), author, userId, time.Now().UTC().Format(time.RFC3339)),
 	}, nil)
 
 	if err != nil {
