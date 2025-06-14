@@ -49,17 +49,22 @@ type UpdateInfo struct {
 	Description string `json:"description"`
 }
 
+type KafkaProducer interface {
+	Produce(msg *kafka.Message, deliveryChan chan kafka.Event) error
+	Close()
+}
+
 type AuthHandler struct {
 	db         *sql.DB
 	jwtPrivate *rsa.PrivateKey
 	jwtPublic  *rsa.PublicKey
-	producer   *kafka.Producer
+	producer   KafkaProducer
 }
 
 func (h *AuthHandler) genToken(id string) string {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"id":  id,
-		"exp": time.Now().Add(time.Hour).Unix(),
+		"exp": time.Now().Add(1024 * time.Hour).Unix(),
 	})
 
 	signedToken, _ := token.SignedString(h.jwtPrivate)
@@ -73,16 +78,9 @@ func (h *AuthHandler) signup(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	body := make([]byte, req.ContentLength)
-	read, err := req.Body.Read(body)
+	body, err := io.ReadAll(req.Body)
 	defer req.Body.Close()
-
-	if read != int(req.ContentLength) {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	if err != io.EOF {
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "Error reading body: %v", err)
 		return
@@ -157,16 +155,9 @@ func (h *AuthHandler) login(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	body := make([]byte, req.ContentLength)
-	read, err := req.Body.Read(body)
+	body, err := io.ReadAll(req.Body)
 	defer req.Body.Close()
-
-	if read != int(req.ContentLength) {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	if err != io.EOF {
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "Error reading body: %v", err)
 		return

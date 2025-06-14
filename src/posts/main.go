@@ -71,11 +71,15 @@ func initDB(db *sql.DB) {
 	}
 }
 
+type KafkaProducer interface {
+	Produce(msg *kafka.Message, deliveryChan chan kafka.Event) error
+}
+
 type Server struct {
 	UnimplementedPostsServer
 	db        *sql.DB
 	jwtPublic *rsa.PublicKey
-	producer  *kafka.Producer
+	producer  KafkaProducer
 }
 
 func (s *Server) CreatePost(ctx context.Context, req *CreatePostRequest) (*emptypb.Empty, error) {

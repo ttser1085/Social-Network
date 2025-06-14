@@ -14,5 +14,6 @@ RUN go mod download -x
 COPY * .
 
 RUN go build
+RUN go test -v ./...
 
 ENTRYPOINT ["./posts"]

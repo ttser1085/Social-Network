@@ -12,15 +12,22 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+type DB interface {
+	Query(ctx context.Context, query string, args ...any) (driver.Rows, error)
+	QueryRow(ctx context.Context, query string, args ...any) driver.Row
+	Exec(ctx context.Context, query string, args ...any) error
+}
+
 type Server struct {
 	UnimplementedStatsServer
 	consumer *kafka.Consumer
-	db       clickhouse.Conn
+	db       DB
 }
 
 const maxEntries = 100
@@ -356,7 +363,7 @@ func (s *Server) processMessage(msg *kafka.Message) {
 	}
 }
 
-func initDB(db clickhouse.Conn) {
+func initDB(db DB) {
 	query := `
 	DROP TABLE IF EXISTS post_stats
 	`
