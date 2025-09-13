@@ -1,6 +1,6 @@
 FROM golang:1.20-alpine
 
-WORKDIR /practice-security/auth
+WORKDIR /practice-security/gateway
 COPY go.* .
 
 RUN go mod download -x

@@ -1,0 +1,84 @@
+syntax = "proto3";
+package stats;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/ttser1085/Social-Network/stats/main";
+
+service Stats {
+    rpc (PostRequest) returns (PostStat) {
+      option (google.api.http) = {
+        get: "/stats/post"
+      };
+    }
+
+    rpc GetViesDynamic(PostRequest) returns (ViewsDynamic) {
+      option (google.api.http) = {
+        get: "/stats/post/views"
+      };
+    }
+
+    rpc GetLikesDynamic(PostRequest) returns (LikesDynamic) {
+      option (google.api.http) = {
+        get: "/stats/post/likes"
+      };
+    }
+
+    rpc GetCommentsDynamic(PostRequest) returns (CommentsDynamic) {
+      option (google.api.http) = {
+        get: "/stats/post/comments"
+      };
+    }
+
+    rpc GetTopPosts(Attribute) returns (TopPosts) {
+      option (google.api.http) = {
+        get: "/stats/top-posts"
+      };
+    }
+
+    rpc GetTopUsers(Attribute) returns (TopUsers) {
+      option (google.api.http) = {
+        get: "/stats/top-users"
+      };
+    }
+}
+
+message PostRequest {
+    string post_id = 1;
+}
+
+message Attribute {
+  string attr = 1;
+}
+
+message PostStat {
+    int32 likes = 1;
+    int32 views = 2;
+    int32 comments = 3;
+}
+
+message ViewsDynamic {
+    repeated int32 views = 1;
+    repeated google.protobuf.Timestamp times = 2;
+}
+
+message LikesDynamic {
+    repeated int32 likes = 1;
+    repeated google.protobuf.Timestamp times = 2;
+}
+
+message CommentsDynamic {
+    repeated int32 comments = 1;
+    repeated google.protobuf.Timestamp times = 2;
+}
+
+message TopPosts {
+    repeated string posts = 1;
+}
+
+message TopUsers {
+    repeated string users = 1;
+}
+

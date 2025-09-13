@@ -1,3 +1,3 @@
-module github.com/yourusername/Social-Network/src/gateway
+module github.com/ttser1085/Social-Network/src/gateway
 
 go 1.20

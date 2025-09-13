@@ -14,3 +14,45 @@
 
 - update:
     `curl -v -X GET 'localhost:8091/update' --data '{"name": "boba2"}'  -H 'Cookie: jwt= ...'`
+
+- create post:
+    `curl -v -X POST 'localhost:8094/posts' -H 'Cookie: token= ...' --data '{"title": "My post", "text":"post text"}'`
+
+- get posts:
+    `curl -v -X GET 'localhost:8094/posts?user_id=aboba'`
+
+- modify post:
+    `curl -v -X PUT 'localhost:8094/posts' -H 'Cookie: token= ...' --data '{"id": ..., "title": "new My post", "text":"new post text"}'`
+
+- delete post:
+    `curl -v -X DELETE 'localhost:8094/posts?id=...' -H 'Cookie: token= ...'`
+
+- create comment:
+    `curl -v -X POST 'localhost:8094/comments' -H 'Cookie: token= ...' --data '{"post_id": ..., "text":"comment text"}'`
+
+- get comments:
+    `curl -v -X GET 'localhost:8094/comments?post_id=...'`
+
+- delete comment:
+    `curl -v -X DELETE 'localhost:8094/comments?id=...' -H 'Cookie: token= ...'`
+
+- like post:
+    `curl -v -X POST 'localhost:8094/posts/likes' -H 'Cookie: token= ...' --data '{"post_id": ...}'`
+
+- get likes:
+    `curl -v -X GET 'localhost:8094/posts/likes?post_id=...'`
+
+- get post stat:
+    `curl -v -X GET 'localhost:8096/stats/post?post_id=...'`
+
+- get views dynamic:
+    `curl -v -X GET 'localhost:8096/stats/post/views?post_id=...'`
+
+- get likes dynamic:
+    `curl -v -X GET 'localhost:8096/stats/post/likes?post_id=...'`
+
+- get comments dynamic:
+    `curl -v -X GET 'localhost:8096/stats/post/comments?post_id=...'`
+
+- get top posts:
+    `curl -v -X GET 'localhost:8096/stats/top-posts?attr=...'`

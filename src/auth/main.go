@@ -13,6 +13,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/golang-jwt/jwt/v5"
 
 	_ "github.com/lib/pq"
@@ -48,16 +49,22 @@ type UpdateInfo struct {
 	Description string `json:"description"`
 }
 
+type KafkaProducer interface {
+	Produce(msg *kafka.Message, deliveryChan chan kafka.Event) error
+	Close()
+}
+
 type AuthHandler struct {
 	db         *sql.DB
 	jwtPrivate *rsa.PrivateKey
 	jwtPublic  *rsa.PublicKey
+	producer   KafkaProducer
 }
 
 func (h *AuthHandler) genToken(id string) string {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"id":  id,
-		"exp": time.Now().Add(time.Hour).Unix(),
+		"exp": time.Now().Add(1024 * time.Hour).Unix(),
 	})
 
 	signedToken, _ := token.SignedString(h.jwtPrivate)
@@ -71,16 +78,9 @@ func (h *AuthHandler) signup(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	body := make([]byte, req.ContentLength)
-	read, err := req.Body.Read(body)
+	body, err := io.ReadAll(req.Body)
 	defer req.Body.Close()
-
-	if read != int(req.ContentLength) {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	if err != io.EOF {
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "Error reading body: %v", err)
 		return
@@ -128,6 +128,18 @@ func (h *AuthHandler) signup(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	topic := "signup"
+	err = h.producer.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Value:          fmt.Appendf(nil, "id: %s, time: %s", creds.Id, time.Now().String()),
+	}, nil)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "Error sending with kafka: %v", err)
+		return
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:  "jwt",
 		Value: h.genToken(creds.Id),
@@ -143,16 +155,9 @@ func (h *AuthHandler) login(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	body := make([]byte, req.ContentLength)
-	read, err := req.Body.Read(body)
+	body, err := io.ReadAll(req.Body)
 	defer req.Body.Close()
-
-	if read != int(req.ContentLength) {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	if err != io.EOF {
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "Error reading body: %v", err)
 		return
@@ -336,8 +341,8 @@ func (h *AuthHandler) update(w http.ResponseWriter, req *http.Request) {
 }
 
 func connectToDB() (*sql.DB, error) {
-	fmt.Println("Connectint to database...")
-	connStr := "host=db port=5432 user=auth password=password dbname=usersdb sslmode=disable"
+	fmt.Println("Connecting to database...")
+	connStr := "host=users_db port=5432 user=auth password=password dbname=usersdb sslmode=disable"
 	return sql.Open("postgres", connStr)
 }
 
@@ -410,7 +415,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	handler := AuthHandler{db, jwtPrivate, jwtPublic}
+	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "kafka:9092"})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	handler := AuthHandler{db, jwtPrivate, jwtPublic, p}
+	defer handler.producer.Close()
 	http.HandleFunc("/signup", handler.signup)
 	http.HandleFunc("/login", handler.login)
 	http.HandleFunc("/whoami", handler.whoami)
